@@ -17,7 +17,7 @@ fun String.parseLanguageFeature(): Pair<LanguageFeature, LanguageFeature.State> 
     checkTestInfrastructure (matcher.find()) {
         """Wrong syntax in the '// LANGUAGE: ...' directive:
                    found: '${this}'
-                   Must be '((+|-|warn:)LanguageFeatureName)+'
+                   Must be '((+|-)LanguageFeatureName)+'
                    where '+' means 'enable', '-' means 'disable', 'warn:' means 'enable with warning'
                    and language feature names are names of enum entries in LanguageFeature enum class"""
     }
