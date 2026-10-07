@@ -6,5 +6,7 @@ error class Foo
 annotation class Ann
 
 fun foo(): @Ann (String | Foo) = ""
+fun foo2(): @Ann String | Foo = ""
+fun foo3(): @Ann (@Ann String | Foo) = ""
 
 /* GENERATED_FIR_TAGS: annotationDeclaration, classDeclaration, functionDeclaration, stringLiteral */

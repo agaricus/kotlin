@@ -5050,6 +5050,12 @@ public class CompiledJsStubsTestGenerated extends AbstractCompiledJsStubsTest {
     public void testUnionTypeSmoke() {
       run("unionTypeSmoke.kt");
     }
+
+    @Test
+    @TestMetadata("unionTypeWithAnnotations.kt")
+    public void testUnionTypeWithAnnotations() {
+      run("unionTypeWithAnnotations.kt");
+    }
   }
 
   @Nested

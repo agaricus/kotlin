@@ -5062,6 +5062,12 @@ public class SourceStubsTestGenerated extends AbstractSourceStubsTest {
     public void testUnionTypeSmoke() {
       run("unionTypeSmoke.kt");
     }
+
+    @Test
+    @TestMetadata("unionTypeWithAnnotations.kt")
+    public void testUnionTypeWithAnnotations() {
+      run("unionTypeWithAnnotations.kt");
+    }
   }
 
   @Nested
