@@ -1,0 +1,15 @@
+package test
+
+public fun foo(): @test.Ann kotlin.String
+
+@kotlin.annotation.Target(allowedTargets = {AnnotationTarget.TYPE}) public final annotation class Ann : kotlin.Annotation {
+    /*primary*/ public constructor Ann()
+}
+
+public object Bar : kotlin.RichError {
+    /*primary*/ private constructor Bar()
+}
+
+public final class Foo : kotlin.RichError {
+    /*primary*/ public constructor Foo()
+}

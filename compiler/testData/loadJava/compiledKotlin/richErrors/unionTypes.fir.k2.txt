@@ -1,0 +1,16 @@
+public final fun foo(): R|@R|test/Ann|()  union(primary=@R|test/Ann|()  kotlin/String, errors=test/Foo | test/Bar)|
+
+@R|kotlin/annotation/Target|(allowedTargets = <collectionLiteralCall>(kotlin/annotation/AnnotationTarget.TYPE)) public final annotation class Ann : R|kotlin/Annotation| {
+    public constructor(): R|test/Ann|
+
+}
+
+public final object Bar : R|kotlin/RichError| {
+    private constructor(): R|test/Bar|
+
+}
+
+public final class Foo : R|kotlin/RichError| {
+    public constructor(): R|test/Foo|
+
+}

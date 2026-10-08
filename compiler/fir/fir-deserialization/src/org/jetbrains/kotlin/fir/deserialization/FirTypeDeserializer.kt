@@ -249,10 +249,23 @@ class FirTypeDeserializer(
             else -> ConeClassLikeTypeImpl(constructor, arguments, isMarkedNullable = proto.nullable, attributes)
         }
 
-        val abbreviatedType = proto.abbreviatedType(typeTable)?.let { rigidType(it, attributes) }
-            ?: return classLikeType
+        val withAbbreviation = proto.abbreviatedType(typeTable)
+            ?.let { rigidType(it, attributes) }
+            ?.let { classLikeType.withAttributes(classLikeType.attributes.add(AbbreviatedTypeAttribute(it))) }
+            ?: classLikeType
 
-        return classLikeType.withAttributes(classLikeType.attributes.add(AbbreviatedTypeAttribute(abbreviatedType)))
+        val richErrors = proto.richErrors(typeTable)
+        if (richErrors.isNotEmpty()) {
+            @OptIn(DelicateUnionConstructor::class)
+            return ConeUnionType(
+                primaryType = withAbbreviation,
+                richErrorTypes = richErrors.map { type(it) },
+                attributes = loadAnnotationsFromMetadata(moduleData.session, proto.unionTypeAnnotationList, nameResolver)
+                    .computeTypeAttributes(moduleData.session, shouldExpandTypeAliases = false)
+            )
+        }
+
+        return withAbbreviation
     }
 
     private fun createSuspendFunctionTypeForBasicCase(
