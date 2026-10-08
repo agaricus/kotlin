@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.test.directives.DiagnosticsDirectives.REPORT_ONLY_EX
 import org.jetbrains.kotlin.test.directives.ForeignAnnotationsDirectives.ENABLE_FOREIGN_ANNOTATIONS
 import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives.ENABLE_DEBUG_MODE
 import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives.USE_PSI_CLASS_FILES_READING
+import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.LANGUAGE
 import org.jetbrains.kotlin.test.frontend.fir.Fir2IrCliJvmFacade
 import org.jetbrains.kotlin.test.frontend.fir.FirCliJvmFacade
 import org.jetbrains.kotlin.test.frontend.fir.FirMetaInfoDiffSuppressor
@@ -288,6 +289,12 @@ fun TestConfigurationBuilder.configureJvmBoxCodegenSettings(includeAllDumpHandle
         defaultDirectives {
             +ENABLE_FOREIGN_ANNOTATIONS
             ForeignAnnotationsDirectives.ANNOTATIONS_PATH with JavaForeignAnnotationType.Annotations
+        }
+    }
+
+    forTestsMatching("compiler/testData/codegen/box(?:Jvm)?/richErrors/*") {
+        defaultDirectives {
+            LANGUAGE + "+RichErrors"
         }
     }
 }
