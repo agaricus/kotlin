@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.fir.backend
 
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.*
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -744,10 +743,19 @@ class Fir2IrVisitor(
         )
 
         return conversionScope.withSafeCallSubject(receiverVariable) {
-            val afterNotNullCheck =
+            val afterCheck =
                 (safeCallExpression.selector as? FirExpression)?.let(::convertToIrExpression)
                     ?: safeCallExpression.selector.accept(this, data) as IrExpression
-            c.createSafeCallConstruction(receiverVariable, variableSymbol, afterNotNullCheck)
+            when (safeCallExpression.kind) {
+                NullSafe -> c.createSafeCallConstruction(receiverVariable, variableSymbol, afterCheck)
+                ErrorSafe -> c.createErrorSafeCallConstruction(
+                    receiverVariable = receiverVariable,
+                    receiverVariableSymbol = variableSymbol,
+                    expressionOnNotError = afterCheck,
+                    resultType = safeCallExpression.resolvedType.toIrType(),
+                    receiverType = safeCallExpression.checkedSubjectRef.value.resolvedType.toIrType()
+                )
+            }
         }
     }
 
@@ -756,7 +764,7 @@ class Fir2IrVisitor(
         return checkedSafeCallSubject.convertWithOffsets { startOffset, endOffset ->
             IrGetValueImpl(startOffset, endOffset, lastSubjectVariable.type, lastSubjectVariable.symbol)
         }.let {
-            Fir2IrImplicitCastInserter.implicitCastOrExpression(it, it.type.makeNotNull())
+            Fir2IrImplicitCastInserter.implicitCastOrExpression(it, checkedSafeCallSubject.resolvedType.toIrType())
         }
     }
 

@@ -129,6 +129,41 @@ fun Fir2IrComponents.createWhenForSafeFall(
     }
 }
 
+
+fun Fir2IrComponents.createErrorSafeCallConstruction(
+    receiverVariable: IrVariable,
+    receiverVariableSymbol: IrValueSymbol,
+    expressionOnNotError: IrExpression,
+    resultType: IrType,
+    receiverType: IrType,
+): IrExpression {
+    val startOffset = expressionOnNotError.startOffset
+    val endOffset = expressionOnNotError.endOffset
+
+    return IrBlockImpl(startOffset, endOffset, resultType, ERROR_SAFE_CALL).apply {
+        statements += receiverVariable
+
+        val startOffset = expressionOnNotError.startOffset
+        val endOffset = expressionOnNotError.endOffset
+
+        statements += IrWhenImpl(startOffset, endOffset, resultType).apply {
+            val condition = IrTypeOperatorCallImpl(
+                startOffset, endOffset, builtins.booleanType,
+                NOT_INSTANCEOF,
+                receiverType,
+                IrGetValueImpl(startOffset, endOffset, receiverVariableSymbol)
+            )
+            branches += IrBranchImpl(
+                condition, IrGetValueImpl(startOffset, endOffset, receiverVariableSymbol)
+            )
+            branches += IrElseBranchImpl(
+                IrConstImpl.boolean(startOffset, endOffset, builtins.booleanType, true),
+                expressionOnNotError
+            )
+        }
+    }
+}
+
 fun Fir2IrConversionScope.createTemporaryVariable(
     receiverExpression: IrExpression,
     nameHint: String? = null
