@@ -432,9 +432,9 @@ class ServiceMessage {
     private StringBuilder appendAttribute(StringBuilder msg, String key, Object value) {
         String strValue = null
         if (value instanceof String) {
-            strValue = value
+            strValue = (String) value
         } else {
-            strValue = value as String
+            strValue = value != null ? value.toString() : null
         }
         if (key == null) {
             msg.append(' \'')
@@ -451,7 +451,13 @@ class ServiceMessage {
                     case '\'': msg.append(ESCAPE_CHARACTER).append('\''); break
                     case '[': msg.append(ESCAPE_CHARACTER).append('['); break
                     case ']': msg.append(ESCAPE_CHARACTER).append(']'); break
-                    default: ch < 128 ? msg.append(ch) : msg.append(ESCAPE_CHARACTER).append(String.format("0x%04x", (int)ch)); break
+                    default:
+                        if (ch < 128) {
+                            msg.append(ch)
+                        } else {
+                            msg.append(ESCAPE_CHARACTER).append(String.format("0x%04x", (int)ch))
+                        }
+                        break
                 }
             }
         }
@@ -518,6 +524,14 @@ abstract class CompileTaskErrorOutputService implements BuildService<BuildServic
         task.logging.addStandardErrorListener(errorOutputListener)
     }
 
+    void removeCompileTaskErrorOutputListener(Task task) {
+        def errorOutputListener = errorOutputListeners.remove(task.path)
+        if (errorOutputListener != null) {
+            task.logging.removeStandardErrorListener(errorOutputListener)
+            errorOutputListener.clear()
+        }
+    }
+
     @Override
     void onFinish(FinishEvent finishEvent) {
         if (!(finishEvent instanceof TaskFinishEvent)) return
@@ -541,7 +555,7 @@ abstract class CompileTaskErrorOutputService implements BuildService<BuildServic
     }
 
     private static class ErrorOutputListener implements StandardOutputListener {
-        private static final int MAX_BUFFER_SIZE = Integer.getInteger(Constants.COMPILE_ERROR_MAX_LENGTH_SYSTEM_PROP, 5 * 1024 * 1024) // default 5MB
+        private static final int MAX_BUFFER_SIZE = Integer.getInteger(Constants.COMPILE_ERROR_MAX_LENGTH_SYSTEM_PROP, 1024 * 1024) // default 1MB
         private final StringBuffer stringBuffer = new StringBuffer()
         private volatile boolean truncated = false
 
@@ -565,8 +579,8 @@ abstract class CompileTaskErrorOutputService implements BuildService<BuildServic
 
         Collection<String> getMessages() {
             def messages = []
-            def lines = stringBuffer.toString().split('\\r?\\n')
-            for (line in lines) {
+            def text = stringBuffer.toString()
+            text.eachLine { line ->
                 def trimmedLine = line.trim()
                 if (trimmedLine.length() > 0) {
                     messages.add(line)
@@ -607,11 +621,17 @@ abstract class CompileTaskErrorOutputPlugin implements Plugin<Gradle> {
                 task.doFirst {
                     compileTaskErrorOutputServiceProvider.get().addCompileTaskErrorOutputListener(it)
                 }
+                task.doLast {
+                    compileTaskErrorOutputServiceProvider.get().removeCompileTaskErrorOutputListener(it)
+                }
             }
             project.tasks.configureEach { Task task ->
                 if (!(task instanceof AbstractCompile) && Util.isInstance(task.class, "org.jetbrains.kotlin.gradle.tasks.KotlinCompileTool")) {
                     task.doFirst {
                         compileTaskErrorOutputServiceProvider.get().addCompileTaskErrorOutputListener(it)
+                    }
+                    task.doLast {
+                        compileTaskErrorOutputServiceProvider.get().removeCompileTaskErrorOutputListener(it)
                     }
                 }
             }
@@ -1039,7 +1059,7 @@ public class TestDescriptorWrapper extends DescriptorWrapper {
     }
 
     void flush(List outputs, Closure action) {
-        if (outputs == null) return
+        if (outputs == null || outputs.isEmpty()) return
         StringBuilder stdout = new StringBuilder()
         StringBuilder stderr = new StringBuilder()
 
@@ -1055,9 +1075,22 @@ public class TestDescriptorWrapper extends DescriptorWrapper {
                 }
             }
 
-            flushOutputMessage("testStdOut", stdout.toString() - ~/\r?\n\z/, action)
-            flushOutputMessage("testStdErr", stderr.toString() - ~/\r?\n\z/, action)
+            if (stdout.length() > 0) {
+                flushOutputMessage("testStdOut", trimTrailingNewline(stdout.toString()), action)
+            }
+            if (stderr.length() > 0) {
+                flushOutputMessage("testStdErr", trimTrailingNewline(stderr.toString()), action)
+            }
         }
+    }
+
+    private static String trimTrailingNewline(String text) {
+        if (text.endsWith("\r\n")) {
+            return text.substring(0, text.length() - 2)
+        } else if (text.endsWith("\n") || text.endsWith("\r")) {
+            return text.substring(0, text.length() - 1)
+        }
+        return text
     }
 
     private void flushOutputMessage(String type, String message, Closure action) {
