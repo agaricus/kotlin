@@ -187,13 +187,7 @@ projectTests {
         skipInLocalBuild = false,
     ) {
         configureJpsTests()
-        val btaImplHomeFiles: FileCollection = btaImplHomeResolvable.get()
-        inputs.files(btaImplHomeFiles).withPropertyName("btaImplHome").withNormalizer(ClasspathNormalizer::class)
-        val btaImplHomePath = providers.gradleProperty("kotlin.jps.build.tools.impl.home")
-            .orElse(provider { btaImplHomeFiles.singleFile.absolutePath })
-        jvmArgumentProviders.add(CommandLineArgumentProvider {
-            listOf("-Dkotlin.jps.build.tools.impl.home=${btaImplHomePath.get()}")
-        })
+        addClasspathProperty(btaImplHomeResolvable.get(), "kotlin.jps.build.tools.impl.home")
     }
 
     testGenerator("org.jetbrains.kotlin.jps.GenerateJpsPluginTestsKt", doNotSetFixturesSourceSetDependency = true) {
