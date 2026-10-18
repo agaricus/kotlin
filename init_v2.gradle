@@ -532,15 +532,20 @@ class TeamcityTestListener implements TestListener, TestOutputListener {
     }
 }
 
-class BuildDirectoriesResolver {
+@CompileStatic
+class BuildDirectoriesResolver implements Serializable {
     private String buildStacktraceLogDir
     private final String buildTempDir
-    private final Project project
+    private final File buildDir
 
     BuildDirectoriesResolver(Project project) {
+        this(project.getLayout().getBuildDirectory().getAsFile().get())
+    }
+
+    BuildDirectoriesResolver(File buildDir) {
         this.buildStacktraceLogDir = System.getenv(Constants.STACKTRACE_LOG_DIR_ENV_VAR)
         this.buildTempDir = System.getenv(Constants.BUILD_TEMP_DIR_ENV_VAR)
-        this.project = project
+        this.buildDir = buildDir
     }
 
     String getBuildStacktraceLogDir() {
@@ -556,7 +561,7 @@ class BuildDirectoriesResolver {
     }
 
     File getBuildDir() {
-        return project.getLayout().getBuildDirectory().getAsFile().get()
+        return buildDir
     }
 }
 
