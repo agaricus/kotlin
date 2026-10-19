@@ -70,19 +70,17 @@ internal class TestFederationModel private constructor(
     }
 
     /**
-     * Renders the table into TSV to be consumed by TeamCity
+     * Renders the model into a `.properties` file to be consumed by TeamCity
      *
-     * Columns:
-     * - domain name
-     * - test subsets (comma-separated)
-     * - `changed` if the domain is changed / `-` otherwise
+     * Keys, for every domain:
+     * - `<domain>.testSubsets` - test subsets (comma-separated)
+     * - `<domain>.changed` - `true` if the domain is changed / `false` otherwise
      */
-    fun renderTsv(): String = rows.joinToString("\n", postfix = "\n") {
-        listOf(
-            it.domain.name,
-            it.testSubsets.joinToString(",") { subset -> subset.name },
-            if (it.isChanged) "changed" else "-",
-        ).joinToString("\t")
+    fun renderProperties(): String = rows.joinToString("\n", postfix = "\n") {
+        buildString {
+            appendLine("${it.domain.name}.testSubsets=${it.testSubsets.joinToString(",") { subset -> subset.name }}")
+            append("${it.domain.name}.changed=${it.isChanged}")
+        }
     }
 
     /**

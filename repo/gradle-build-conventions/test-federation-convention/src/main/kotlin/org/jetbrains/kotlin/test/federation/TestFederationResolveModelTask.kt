@@ -36,11 +36,11 @@ open class TestFederationResolveModelTask : DefaultTask() {
         .value(project.layout.projectDirectory.file(".test-federation.diff.txt"))
 
     /**
-     * @see TestFederationModel.renderTsv
+     * @see TestFederationModel.renderProperties
      */
     @OutputFile
     val modelFile: RegularFileProperty = project.objects.fileProperty()
-        .value(project.layout.projectDirectory.file(".test-federation.model.tsv"))
+        .value(project.layout.projectDirectory.file(".test-federation.model.properties"))
 
     /**
      * @see [TestFederationModel.renderHtml]
@@ -71,7 +71,7 @@ open class TestFederationResolveModelTask : DefaultTask() {
         )
 
         logger.quiet(model.renderAscii())
-        modelFile.get().asFile.writeText(model.renderTsv())
+        modelFile.get().asFile.writeText(model.renderProperties())
         htmlFile.get().asFile.writeText(model.renderHtml())
 
         // Publish the old parameters for backward compatibility (to be removed in favor of test subsets)
